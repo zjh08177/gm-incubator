@@ -1,4 +1,18 @@
+from gm import db as _db
 from gm.stats import repertoire
+
+
+def test_family_rollup_merges_variations(tmp_path):
+    conn = _db.connect(tmp_path / "t.sqlite")
+    _db.init_db(conn)
+    for uuid, name, res in [("a", "Sicilian Defense Smith-Morra Gambit Accepted", "win"),
+                            ("b", "Sicilian Defense Open", "loss")]:
+        conn.execute("INSERT INTO games(uuid,color,result,eco,opening_name) VALUES(?,?,?,?,?)",
+                     (uuid, "white", res, "B21", name))
+    conn.commit()
+    assert len(repertoire.by_color(conn, "white", "opening")) == 2   # distinct variations
+    fam = repertoire.by_color(conn, "white", "family")
+    assert len(fam) == 1 and fam[0]["opening"] == "Sicilian Defense" and fam[0]["games"] == 2
 
 
 def test_groups_by_opening_and_scores(seeded):

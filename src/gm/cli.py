@@ -22,16 +22,27 @@ def version():
 
 @app.command()
 def sync(username: str, time_class: str = "bullet", max_games: int = typer.Option(None),
-         full: bool = False, depth: int = 12, db: str = typer.Option(None)):
-    """Fetch + analyze games from Chess.com into the local KB."""
+         full: bool = False, depth: int = 12, workers: int = 1,
+         since: str = typer.Option(None, help="floor the window, YYYY-MM (parallel only)"),
+         db: str = typer.Option(None)):
+    """Fetch + analyze games from Chess.com into the local KB.
+
+    workers>1 fans engine analysis across threads (each its own Stockfish);
+    re-runs skip whole already-synced months via the stored watermark."""
     import httpx
     from gm import sync as sync_mod
     from gm.analysis.engine import Analyzer
+    since_ym = tuple(int(x) for x in since.split("-")) if since else None
     c = _conn(db)
     try:
-        with Analyzer(depth=depth) as a:
-            res = sync_mod.sync(c, username, time_class, a,
-                                max_games=max_games, full=full)
+        if workers > 1:
+            res = sync_mod.sync_parallel(c, username, time_class, depth=depth,
+                                         workers=workers, max_games=max_games,
+                                         full=full, progress=200, since_ym=since_ym)
+        else:
+            with Analyzer(depth=depth) as a:
+                res = sync_mod.sync(c, username, time_class, a,
+                                    max_games=max_games, full=full)
     except RuntimeError as e:                       # stockfish missing
         typer.secho(str(e), fg="red")
         raise typer.Exit(1)
@@ -42,6 +53,14 @@ def sync(username: str, time_class: str = "bullet", max_games: int = typer.Optio
         typer.secho(msg, fg="red")
         raise typer.Exit(1)
     typer.echo(_json.dumps(res, indent=2))
+
+
+@app.command(name="backfill-openings")
+def backfill_openings_cmd(db: str = typer.Option(None)):
+    """Populate human opening names from stored PGNs (no re-fetch, no re-analyze)."""
+    from gm import sync as sync_mod
+    res = sync_mod.backfill_openings(_conn(db))
+    typer.echo(f"opening names: {res['updated']}/{res['total']} updated")
 
 
 @app.command()
@@ -65,10 +84,11 @@ def weaknesses_cmd(db: str = typer.Option(None), json: bool = typer.Option(False
 
 @app.command(name="repertoire")
 def repertoire_cmd(db: str = typer.Option(None), json: bool = typer.Option(False, "--json"),
-                   md: bool = typer.Option(False, "--md")):
+                   md: bool = typer.Option(False, "--md"),
+                   group: str = typer.Option("opening", help="opening | family")):
     """Opening repertoire by color."""
     c = _conn(db)
-    w, b = repertoire.by_color(c, "white"), repertoire.by_color(c, "black")
+    w, b = repertoire.by_color(c, "white", group), repertoire.by_color(c, "black", group)
     if md:
         typer.echo(report.repertoire_md(w, b))
     else:
@@ -102,6 +122,19 @@ def accept(db: str = typer.Option(None)):
     """L5 gate: our analysis vs Chess.com accuracies (+ shuffle control)."""
     from gm import accept as acc
     typer.echo(_json.dumps(acc.correlate(_conn(db)), indent=2))
+
+
+@app.command()
+def profile(db: str = typer.Option(None), out: str = typer.Option(None)):
+    """Full player profile (markdown): rating, repertoire, weaknesses, blunders."""
+    from gm import profile as prof
+    md = prof.build(_conn(db))
+    if out:
+        from pathlib import Path
+        Path(out).write_text(md)
+        typer.echo(f"wrote {out}")
+    else:
+        typer.echo(md)
 
 
 if __name__ == "__main__":

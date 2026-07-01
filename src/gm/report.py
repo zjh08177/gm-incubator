@@ -1,10 +1,19 @@
+from gm import viz
+
+
 def _wk_table(rows):
-    out = ["| Category | Count | Win% lost | Worst example |",
-           "|---|---|---|---|"]
-    for r in rows:
+    total = sum(r["winprob_lost"] for r in rows) or 1
+    mx = max((r["winprob_lost"] for r in rows), default=1) or 1
+    out = ["| | Category | Win% lost | | Count | Worst example |",
+           "|---|---|--:|---|--:|---|"]
+    for i, r in enumerate(rows):
         ex = r["example"]
-        cell = f'{ex["game_uuid"]} ply {ex["ply"]} ({ex["san"]})' if ex else "-"
-        out.append(f'| {r["category"]} | {r["count"]} | {r["winprob_lost"]:.2f} | {cell} |')
+        cell = (f'`{ex["game_uuid"]}` ply {ex["ply"]} `{ex["san"]}`') if ex else "-"
+        g = viz.share_glyph(r["winprob_lost"] / total)
+        b = viz.bar(r["winprob_lost"] / mx)
+        name = f'**{r["category"]}**' if i == 0 else r["category"]
+        out.append(f'| {g} | {name} | {round(r["winprob_lost"]):,} | {b} '
+                   f'| {r["count"]:,} | {cell} |')
     return "\n".join(out)
 
 
@@ -17,12 +26,15 @@ def weaknesses_md(ranked, had_time_ranked) -> str:
 
 
 def _rep_section(title, rows):
-    out = [f"## {title}", "", "| Opening | Games | Score | W-D-L | Leaves book (ply) |",
-           "|---|---|---|---|---|"]
+    out = [f"## {title}", "",
+           "| | Opening | Games | Score | W-D-L |",
+           "|---|---|--:|---|---|"]
     for r in rows:
         w, d, l = r["wdl"]
-        bp = r["break_ply"] if r["break_ply"] is not None else "-"
-        out.append(f'| {r["opening"]} | {r["games"]} | {r["score"]:.2f} | {w}-{d}-{l} | {bp} |')
+        eco = r.get("eco")
+        name = f'{r["opening"]} · {eco}' if eco and eco != r["opening"] else r["opening"]
+        out.append(f'| {viz.score_glyph(r["score"])} | {name} | {r["games"]:,} '
+                   f'| {r["score"]:.2f} {viz.bar(r["score"])} | {viz.stacked_wdl(w, d, l)} |')
     return "\n".join(out)
 
 

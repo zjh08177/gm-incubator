@@ -1,9 +1,15 @@
-def by_color(conn, color: str) -> list[dict]:
+def _family(name: str) -> str:
+    """Roll a full opening name up to its first two words (the recognizable family)."""
+    return " ".join(name.split()[:2]) if name else name
+
+
+def by_color(conn, color: str, group: str = "opening") -> list[dict]:
     games = conn.execute(
         "SELECT uuid, eco, opening_name, result FROM games WHERE color=?", (color,)).fetchall()
     buckets: dict[str, dict] = {}
     for g in games:
-        key = g["opening_name"] or g["eco"] or "Unknown"
+        name = g["opening_name"] or g["eco"] or "Unknown"
+        key = _family(name) if group == "family" else name
         b = buckets.setdefault(key, {"opening": key, "eco": g["eco"],
                                      "games": 0, "wdl": [0, 0, 0], "uuids": []})
         b["games"] += 1
