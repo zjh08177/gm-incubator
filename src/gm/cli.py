@@ -64,20 +64,23 @@ def backfill_openings_cmd(db: str = typer.Option(None)):
 
 
 @app.command()
-def stats(db: str = typer.Option(None), json: bool = typer.Option(False, "--json")):
+def stats(db: str = typer.Option(None), json: bool = typer.Option(False, "--json"),
+          time_class: str = typer.Option(None, "--time-class", help="bullet | blitz | rapid")):
     """Corpus overview."""
-    typer.echo(_json.dumps(overview.summary(_conn(db)), indent=2))
+    typer.echo(_json.dumps(overview.summary(_conn(db), time_class), indent=2))
 
 
 @app.command(name="weaknesses")
 def weaknesses_cmd(db: str = typer.Option(None), json: bool = typer.Option(False, "--json"),
                    md: bool = typer.Option(False, "--md"),
-                   had_time: bool = typer.Option(False, "--had-time")):
+                   had_time: bool = typer.Option(False, "--had-time"),
+                   time_class: str = typer.Option(None, "--time-class", help="bullet | blitz | rapid")):
     """Ranked recurring weaknesses."""
     c = _conn(db)
-    ranked = weaknesses.rank(c, had_time_only=had_time)
+    ranked = weaknesses.rank(c, had_time_only=had_time, time_class=time_class)
     if md:
-        typer.echo(report.weaknesses_md(ranked, weaknesses.rank(c, had_time_only=True)))
+        typer.echo(report.weaknesses_md(
+            ranked, weaknesses.rank(c, had_time_only=True, time_class=time_class)))
     else:
         typer.echo(_json.dumps(ranked, indent=2))
 
@@ -85,10 +88,12 @@ def weaknesses_cmd(db: str = typer.Option(None), json: bool = typer.Option(False
 @app.command(name="repertoire")
 def repertoire_cmd(db: str = typer.Option(None), json: bool = typer.Option(False, "--json"),
                    md: bool = typer.Option(False, "--md"),
-                   group: str = typer.Option("opening", help="opening | family")):
+                   group: str = typer.Option("opening", help="opening | family"),
+                   time_class: str = typer.Option(None, "--time-class", help="bullet | blitz | rapid")):
     """Opening repertoire by color."""
     c = _conn(db)
-    w, b = repertoire.by_color(c, "white", group), repertoire.by_color(c, "black", group)
+    w = repertoire.by_color(c, "white", group, time_class=time_class)
+    b = repertoire.by_color(c, "black", group, time_class=time_class)
     if md:
         typer.echo(report.repertoire_md(w, b))
     else:
@@ -103,18 +108,22 @@ def game(uuid: str, db: str = typer.Option(None)):
 
 @app.command(name="search-games")
 def search_games(result: str = typer.Option(None), opening: str = typer.Option(None),
-                 color: str = typer.Option(None), db: str = typer.Option(None)):
+                 color: str = typer.Option(None),
+                 time_class: str = typer.Option(None, "--time-class", help="bullet | blitz | rapid"),
+                 db: str = typer.Option(None)):
     """Filtered game list."""
-    typer.echo(_json.dumps(queries.search_games(_conn(db), result, opening, color), indent=2))
+    typer.echo(_json.dumps(queries.search_games(
+        _conn(db), result, opening, color, time_class), indent=2))
 
 
 @app.command(name="find-positions")
 def find_positions(error_type: str = typer.Option(None), phase: str = typer.Option(None),
                    min_delta: float = 0.0, had_time: bool = typer.Option(False, "--had-time"),
+                   time_class: str = typer.Option(None, "--time-class", help="bullet | blitz | rapid"),
                    db: str = typer.Option(None)):
     """Positions matching error/phase/clock filters."""
     typer.echo(_json.dumps(queries.find_positions(
-        _conn(db), error_type, phase, min_delta, had_time), indent=2))
+        _conn(db), error_type, phase, min_delta, had_time, time_class), indent=2))
 
 
 @app.command()
@@ -125,10 +134,11 @@ def accept(db: str = typer.Option(None)):
 
 
 @app.command()
-def profile(db: str = typer.Option(None), out: str = typer.Option(None)):
+def profile(db: str = typer.Option(None), out: str = typer.Option(None),
+            time_class: str = typer.Option(None, "--time-class", help="bullet | blitz | rapid")):
     """Full player profile (markdown): rating, repertoire, weaknesses, blunders."""
     from gm import profile as prof
-    md = prof.build(_conn(db))
+    md = prof.build(_conn(db), time_class)
     if out:
         from pathlib import Path
         Path(out).write_text(md)

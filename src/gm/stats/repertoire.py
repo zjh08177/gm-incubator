@@ -1,11 +1,17 @@
+from gm.stats import tc_filter
+
+
 def _family(name: str) -> str:
     """Roll a full opening name up to its first two words (the recognizable family)."""
     return " ".join(name.split()[:2]) if name else name
 
 
-def by_color(conn, color: str, group: str = "opening") -> list[dict]:
+def by_color(conn, color: str, group: str = "opening",
+             time_class: str | None = None) -> list[dict]:
+    tc, tca = tc_filter(time_class)
     games = conn.execute(
-        "SELECT uuid, eco, opening_name, result FROM games WHERE color=?", (color,)).fetchall()
+        f"SELECT uuid, eco, opening_name, result FROM games WHERE color=?{tc}",
+        (color, *tca)).fetchall()
     buckets: dict[str, dict] = {}
     for g in games:
         name = g["opening_name"] or g["eco"] or "Unknown"

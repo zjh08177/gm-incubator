@@ -29,12 +29,14 @@ def spearman(xs, ys) -> float:
     return _pearson(_rank(xs), _rank(ys))
 
 
-def correlate(conn) -> dict:
-    rows = conn.execute("""
+def correlate(conn, time_class=None) -> dict:
+    tc = " AND g.time_class=?" if time_class else ""
+    args = [time_class] if time_class else []
+    rows = conn.execute(f"""
         SELECT g.accuracy_self AS acc, AVG(m.winprob_delta) AS loss
         FROM games g JOIN moves m ON m.game_uuid=g.uuid AND m.is_mine=1
-        WHERE g.accuracy_self IS NOT NULL
-        GROUP BY g.uuid HAVING COUNT(m.ply) > 0""").fetchall()
+        WHERE g.accuracy_self IS NOT NULL{tc}
+        GROUP BY g.uuid HAVING COUNT(m.ply) > 0""", args).fetchall()
     acc = [r["acc"] for r in rows]
     loss = [r["loss"] for r in rows]
     n = len(acc)

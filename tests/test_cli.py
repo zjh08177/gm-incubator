@@ -43,6 +43,19 @@ def test_repertoire_md(tmp_path):
     assert res.exit_code == 0 and "Italian Game" in res.stdout
 
 
+def test_time_class_option_scopes_stats(tmp_path):
+    p = _seed_file(tmp_path)                       # one bullet game
+    c = _db.connect(p)
+    c.execute("""INSERT INTO games(uuid,color,result,time_class,opening_name,end_time,my_rating)
+                 VALUES('z1','black','win','blitz','French Defense',20,1600)""")
+    c.commit()
+    allc = json.loads(runner.invoke(app, ["stats", "--db", str(p), "--json"]).stdout)
+    assert allc["games"] == 2
+    scoped = json.loads(runner.invoke(
+        app, ["stats", "--db", str(p), "--json", "--time-class", "bullet"]).stdout)
+    assert scoped["games"] == 1 and list(scoped["by_time_class"]) == ["bullet"]
+
+
 def test_sync_missing_stockfish_is_clean_error(tmp_path, monkeypatch):
     from gm import config
     monkeypatch.setattr(config, "stockfish_path", lambda: None)

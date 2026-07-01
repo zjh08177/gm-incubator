@@ -1,6 +1,6 @@
 """Compose a complete player profile (markdown) from the KB."""
 from gm import accept, report, viz
-from gm.stats import overview, queries, repertoire, weaknesses
+from gm.stats import overview, queries, repertoire, tc_filter, weaknesses
 
 _IDX = {"win": 0, "draw": 1, "loss": 2}
 
@@ -10,37 +10,41 @@ def _wdl_score(wdl) -> float:
     return (wdl[0] + 0.5 * wdl[1]) / g if g else 0.0
 
 
-def _overall(conn) -> dict:
+def _overall(conn, time_class=None) -> dict:
+    gf, gfa = tc_filter(time_class)
     wdl = [0, 0, 0]
-    for r in conn.execute("SELECT result, COUNT(*) n FROM games GROUP BY result"):
+    for r in conn.execute(f"SELECT result, COUNT(*) n FROM games WHERE 1=1{gf} GROUP BY result", gfa):
         if r["result"] in _IDX:
             wdl[_IDX[r["result"]]] += r["n"]
-    span = conn.execute("SELECT MIN(end_time) lo, MAX(end_time) hi FROM games").fetchone()
-    rr = conn.execute("SELECT MIN(my_rating) lo, MAX(my_rating) hi FROM games "
-                      "WHERE my_rating IS NOT NULL").fetchone()
-    latest = conn.execute("SELECT my_rating FROM games WHERE my_rating IS NOT NULL "
-                          "ORDER BY end_time DESC LIMIT 1").fetchone()
+    span = conn.execute(f"SELECT MIN(end_time) lo, MAX(end_time) hi FROM games WHERE 1=1{gf}", gfa).fetchone()
+    rr = conn.execute(f"SELECT MIN(my_rating) lo, MAX(my_rating) hi FROM games "
+                      f"WHERE my_rating IS NOT NULL{gf}", gfa).fetchone()
+    latest = conn.execute(f"SELECT my_rating FROM games WHERE my_rating IS NOT NULL{gf} "
+                          f"ORDER BY end_time DESC LIMIT 1", gfa).fetchone()
     return {"games": sum(wdl), "wdl": wdl, "score": _wdl_score(wdl),
             "span": (span["lo"], span["hi"]), "rating_lohi": (rr["lo"], rr["hi"]),
             "rating_latest": latest["my_rating"] if latest else None}
 
 
-def _color_winrate(conn) -> dict:
+def _color_winrate(conn, time_class=None) -> dict:
+    gf, gfa = tc_filter(time_class)
     out = {}
     for color in ("white", "black"):
         wdl = [0, 0, 0]
         for r in conn.execute(
-                "SELECT result, COUNT(*) n FROM games WHERE color=? GROUP BY result", (color,)):
+                f"SELECT result, COUNT(*) n FROM games WHERE color=?{gf} GROUP BY result",
+                (color, *gfa)):
             if r["result"] in _IDX:
                 wdl[_IDX[r["result"]]] += r["n"]
         out[color] = {"games": sum(wdl), "wdl": wdl, "score": round(_wdl_score(wdl), 3)}
     return out
 
 
-def _rating_by_month(conn) -> list[dict]:
+def _rating_by_month(conn, time_class=None) -> list[dict]:
+    gf, gfa = tc_filter(time_class)
     rows = conn.execute(
-        """SELECT strftime('%Y-%m', end_time, 'unixepoch') AS ym, my_rating AS r, end_time
-           FROM games WHERE my_rating IS NOT NULL ORDER BY end_time""").fetchall()
+        f"""SELECT strftime('%Y-%m', end_time, 'unixepoch') AS ym, my_rating AS r, end_time
+           FROM games WHERE my_rating IS NOT NULL{gf} ORDER BY end_time""", gfa).fetchall()
     months: dict[str, dict] = {}
     for r in rows:
         b = months.setdefault(r["ym"], {"ym": r["ym"], "lo": r["r"], "hi": r["r"],
@@ -64,13 +68,14 @@ def _ts(t) -> str:
     return datetime.datetime.fromtimestamp(t, datetime.timezone.utc).strftime("%Y-%m-%d")
 
 
-def build(conn) -> str:
-    o = _overall(conn)
+def build(conn, time_class=None) -> str:
+    o = _overall(conn, time_class)
     w, d, l = o["wdl"]
     lo_r, hi_r = o["rating_lohi"]
-    traj = _rating_by_month(conn)
+    traj = _rating_by_month(conn, time_class)
+    tag = f" ({time_class})" if time_class else ""
     out = [
-        "# Chess Profile",
+        f"# Chess Profile{tag}",
         "",
         f"**{o['games']:,} games** · {_ts(o['span'][0])} → {_ts(o['span'][1])} · "
         f"score **{o['score']:.2f}** (W-D-L {w:,}-{d:,}-{l:,})",
@@ -93,7 +98,7 @@ def build(conn) -> str:
     else:
         out.append("_(no rated games)_")
 
-    ov = overview.summary(conn)
+    ov = overview.summary(conn, time_class)
     out += ["", "## Where win% leaks (by phase)", ""]
     pl = ov["phase_loss"]
     if pl:
@@ -108,7 +113,7 @@ def build(conn) -> str:
         out += ["", "Serious errors by clock: "
                 + " · ".join(f"{k} {v:,}" for k, v in ov["clock_split"].items())]
 
-    cw = _color_winrate(conn)
+    cw = _color_winrate(conn, time_class)
     out += ["", "## Results by color", "",
             "| | Color | Games | Score | W-D-L |", "|---|---|--:|---|---|"]
     for c in ("white", "black"):
@@ -117,12 +122,14 @@ def build(conn) -> str:
         out.append(f"| {viz.score_glyph(b['score'])} | {c.capitalize()} | {b['games']:,} "
                    f"| {b['score']:.2f} {viz.bar(b['score'])} | {viz.stacked_wdl(ww, dd, ll)} |")
 
-    out += ["", _demote(report.repertoire_md(repertoire.by_color(conn, "white")[:12],
-                                             repertoire.by_color(conn, "black")[:12]).rstrip())]
-    out += ["", _demote(report.weaknesses_md(weaknesses.rank(conn),
-                                             weaknesses.rank(conn, had_time_only=True)).rstrip())]
+    out += ["", _demote(report.repertoire_md(
+        repertoire.by_color(conn, "white", time_class=time_class)[:12],
+        repertoire.by_color(conn, "black", time_class=time_class)[:12]).rstrip())]
+    out += ["", _demote(report.weaknesses_md(
+        weaknesses.rank(conn, time_class=time_class),
+        weaknesses.rank(conn, had_time_only=True, time_class=time_class)).rstrip())]
 
-    top = queries.find_positions(conn, min_delta=0.0, limit=10)
+    top = queries.find_positions(conn, min_delta=0.0, time_class=time_class, limit=10)
     out += ["", "## Biggest single blunders", ""]
     if top:
         out += ["| Game | Ply | Move | Phase | Type | Win% lost |", "|---|--:|---|---|---|--:|"]
@@ -131,7 +138,7 @@ def build(conn) -> str:
     else:
         out.append("_(none — no engine-analyzed moves yet)_")
 
-    oracle = accept.correlate(conn)
+    oracle = accept.correlate(conn, time_class)
     body = (f"Per-game win%-loss vs Chess.com accuracy: Spearman ρ={oracle['rho']} "
             f"(n={oracle['n']}, shuffled control {oracle['shuffled_rho']}, "
             f"gate {'PASS' if oracle['pass'] else 'n/a'}).")

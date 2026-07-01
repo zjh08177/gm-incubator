@@ -1,4 +1,5 @@
-def search_games(conn, result=None, opening=None, color=None, limit=50) -> list[dict]:
+def search_games(conn, result=None, opening=None, color=None, time_class=None,
+                 limit=50) -> list[dict]:
     where, args = [], []
     if result:
         where.append("result=?")
@@ -9,6 +10,9 @@ def search_games(conn, result=None, opening=None, color=None, limit=50) -> list[
     if opening:
         where.append("opening_name LIKE ?")
         args.append(f"%{opening}%")
+    if time_class:
+        where.append("time_class=?")
+        args.append(time_class)
     clause = ("WHERE " + " AND ".join(where)) if where else ""
     rows = conn.execute(
         f"SELECT * FROM games {clause} ORDER BY end_time DESC LIMIT ?", (*args, limit))
@@ -16,7 +20,7 @@ def search_games(conn, result=None, opening=None, color=None, limit=50) -> list[
 
 
 def find_positions(conn, error_type=None, phase=None, min_delta=0.0,
-                   had_time=False, limit=50) -> list[dict]:
+                   had_time=False, time_class=None, limit=50) -> list[dict]:
     where = ["is_mine=1", "severity IS NOT NULL", "winprob_delta>=?"]
     args = [min_delta]
     if error_type:
@@ -27,6 +31,9 @@ def find_positions(conn, error_type=None, phase=None, min_delta=0.0,
         args.append(phase)
     if had_time:
         where.append("clock_bucket='had_time'")
+    if time_class:
+        where.append("game_uuid IN (SELECT uuid FROM games WHERE time_class=?)")
+        args.append(time_class)
     rows = conn.execute(
         f"""SELECT game_uuid,ply,san,fen_before,error_type,severity,winprob_delta,phase
             FROM moves WHERE {' AND '.join(where)}
