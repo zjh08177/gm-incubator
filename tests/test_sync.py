@@ -37,3 +37,26 @@ def test_full_reanalyzes_existing(conn):
     assert r["analyzed"] == 2 and r["skipped"] == 0
     n = conn.execute("SELECT COUNT(*) FROM games").fetchone()[0]
     assert n == 2   # no duplicates
+
+
+def test_skips_non_standard_variants(conn):
+    months = _months()
+    months[0][0]["rules"] = "chess960"     # a standard-engine would misanalyze/crash
+    r = sync.sync(conn, "eric", "bullet", FakeAnalyzer(), months=months)
+    assert r["analyzed"] == 1
+
+
+def test_poison_game_is_isolated_and_counted(conn, monkeypatch):
+    from gm import sync as syncmod
+    real = syncmod.pipeline.analyze_game
+
+    def flaky(pgn, color, analyzer):
+        if "c5" in pgn:                    # g2 (Sicilian) crashes analysis
+            raise RuntimeError("boom")
+        return real(pgn, color, analyzer)
+
+    monkeypatch.setattr(syncmod.pipeline, "analyze_game", flaky)
+    r = sync.sync(conn, "eric", "bullet", FakeAnalyzer(), months=_months())
+    assert r["analyzed"] == 1 and r["failed"] == 1
+    assert conn.execute("SELECT COUNT(*) FROM games").fetchone()[0] == 1
+    assert r["failures"][0]["uuid"] == "g2"

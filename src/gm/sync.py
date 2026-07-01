@@ -31,28 +31,41 @@ def _iter_months(username, months):
         yield chesscom.get_month(url)
 
 
-def sync(conn, username, time_class, analyzer, depth=12,
+def _analyze_one(conn, raw, username, analyzer, full):
+    g = chesscom.normalize(raw, username)
+    rows = pipeline.analyze_game(g["pgn"], g["color"], analyzer)
+    if full:
+        conn.execute("DELETE FROM moves WHERE game_uuid=?", (raw["uuid"],))
+        conn.execute("DELETE FROM games WHERE uuid=?", (raw["uuid"],))
+    _insert(conn, g, rows)
+    conn.commit()                          # per-game commit = kill-safe
+
+
+def sync(conn, username, time_class, analyzer,
          max_games=None, full=False, months=None) -> dict:
-    """Idempotent by game UUID. full=True re-analyzes existing games."""
-    fetched = analyzed = skipped = 0
+    """Idempotent by game UUID. full=True re-analyzes existing games.
+    Standard chess only; a game that fails to analyze is counted and skipped,
+    never aborting the run."""
+    fetched = analyzed = skipped = failed = 0
+    failures = []
     max_end = 0
     for raw_games in _iter_months(username, months):
         for raw in raw_games:
-            if raw.get("time_class") != time_class:
+            if raw.get("time_class") != time_class or raw.get("rules", "chess") != "chess":
                 continue
             fetched += 1
             max_end = max(max_end, raw.get("end_time", 0))
             if _existing(conn, raw["uuid"]) and not full:
                 skipped += 1
                 continue
-            g = chesscom.normalize(raw, username)
-            rows = pipeline.analyze_game(g["pgn"], g["color"], analyzer, depth)
-            if full:
-                conn.execute("DELETE FROM moves WHERE game_uuid=?", (raw["uuid"],))
-                conn.execute("DELETE FROM games WHERE uuid=?", (raw["uuid"],))
-            _insert(conn, g, rows)
-            conn.commit()                      # per-game commit = kill-safe
-            analyzed += 1
+            try:
+                _analyze_one(conn, raw, username, analyzer, full)
+                analyzed += 1
+            except Exception as exc:           # isolate one poison game
+                conn.rollback()
+                failed += 1
+                failures.append({"uuid": raw.get("uuid"), "error": str(exc)})
+                continue
             if max_games and analyzed >= max_games:
                 break
         if max_games and analyzed >= max_games:
@@ -62,4 +75,5 @@ def sync(conn, username, time_class, analyzer, depth=12,
         DO UPDATE SET last_end_time=MAX(last_end_time, excluded.last_end_time)""",
                  (username, time_class, max_end))
     conn.commit()
-    return {"fetched": fetched, "analyzed": analyzed, "skipped": skipped}
+    return {"fetched": fetched, "analyzed": analyzed, "skipped": skipped,
+            "failed": failed, "failures": failures}

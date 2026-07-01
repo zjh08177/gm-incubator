@@ -6,7 +6,16 @@ import chess.pgn
 from gm.analysis import classify, clock as clock_mod, phase as phase_mod, winprob
 
 
-def analyze_game(pgn: str, color: str, analyzer, depth: int) -> list[dict]:
+def _terminal_eval(board: chess.Board, analyzer) -> int:
+    """Eval of the final position, from the side-to-move's POV."""
+    if board.is_checkmate():
+        return -winprob.MATE_CP        # side to move is mated
+    if board.is_game_over():
+        return 0                       # stalemate / draw
+    return analyzer.analyse(board)[0]  # ended by resignation/timeout mid-position
+
+
+def analyze_game(pgn: str, color: str, analyzer) -> list[dict]:
     game = chess.pgn.read_game(io.StringIO(pgn))
     if game is None:
         return []
@@ -34,11 +43,15 @@ def analyze_game(pgn: str, color: str, analyzer, depth: int) -> list[dict]:
         board.push(played)
         node = nxt
 
-    # eval_played for ply i = -eval_best of the next position (mover flips).
+    if not steps:
+        return []
+    term_eval = _terminal_eval(board, analyzer)
+
+    # eval_played for ply i = -(best eval of the position AFTER the played move).
     rows = []
     for i, s in enumerate(steps):
-        nxt_best = steps[i + 1]["eval_best_cp"] if i + 1 < len(steps) else -s["eval_best_cp"]
-        eval_played = -nxt_best
+        after_best = steps[i + 1]["eval_best_cp"] if i + 1 < len(steps) else term_eval
+        eval_played = -after_best
         delta = winprob.loss(s["eval_best_cp"], eval_played)
         sev = winprob.severity(delta) if s["is_mine"] else None
         cat = None

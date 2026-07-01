@@ -22,11 +22,28 @@ def test_dropped_material_when_move_hangs_piece():
     assert cat == "dropped_material"
 
 
-def test_endgame_conversion_when_winning_endgame_slips():
-    b = chess.Board("8/8/8/4k3/8/8/4P3/4K3 w - - 0 60")  # winning K+P endgame
-    cat = classify.classify(b, "e2e4", "e1d1", eval_best_cp=300,
+def test_endgame_conversion_only_for_quiet_positional_slip():
+    # K+P: Kf4 keeps the pawn defended (no hang) but throws the win. Genuine conversion slip.
+    b = chess.Board("8/8/4k3/4P3/4K3/8/8/8 w - - 0 60")
+    cat = classify.classify(b, "e4f4", "e4d5", eval_best_cp=300,
                             eval_played_cp=0, severity="blunder", phase="endgame")
     assert cat == "endgame_conversion"
+
+
+def test_endgame_hang_is_dropped_not_conversion():
+    # Winning endgame, but the move hangs a piece -> dropped_material, NOT conversion.
+    b = chess.Board("4k3/8/8/3p4/8/8/8/4KB2 w - - 0 60")
+    cat = classify.classify(b, "f1c4", "e1e2", eval_best_cp=300,
+                            eval_played_cp=100, severity="mistake", phase="endgame")
+    assert cat == "dropped_material"
+
+
+def test_endgame_walk_into_mate_is_not_conversion():
+    # Was winning, then walked into forced mate -> allowed_tactic, NOT conversion.
+    b = chess.Board("8/8/4k3/4P3/4K3/8/8/8 w - - 0 60")
+    cat = classify.classify(b, "e4f4", "e4d5", eval_best_cp=250,
+                            eval_played_cp=-99997, severity="blunder", phase="endgame")
+    assert cat == "allowed_tactic"
 
 
 def test_missed_tactic_when_best_was_winning_capture():

@@ -28,7 +28,7 @@ def sync(username: str, time_class: str = "bullet", max_games: int = typer.Optio
     from gm.analysis.engine import Analyzer
     c = _conn(db)
     with Analyzer(depth=depth) as a:
-        res = sync_mod.sync(c, username, time_class, a, depth=depth,
+        res = sync_mod.sync(c, username, time_class, a,
                             max_games=max_games, full=full)
     typer.echo(_json.dumps(res, indent=2))
 
