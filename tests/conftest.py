@@ -23,7 +23,7 @@ def seeded(conn):
             VALUES(?,?,?,'fen',0,'a1a1',0,?,1000,?,?,?,?,?)""",
                      (g, ply, san, delta, phase, bucket, cat, sev, mine))
 
-    mv("gA", 5, 1, "blunder", "dropped_material", 0.4, "had_time", "middlegame")
+    mv("gA", 5, 1, "blunder", "dropped_material", 0.4, "had_time", "opening")
     mv("gA", 7, 1, "mistake", "dropped_material", 0.15, "low_clock", "middlegame")
     mv("gA", 9, 1, "mistake", "endgame_conversion", 0.18, "had_time", "endgame")
     mv("gB", 4, 1, "blunder", "missed_tactic", 0.30, "had_time", "opening")
