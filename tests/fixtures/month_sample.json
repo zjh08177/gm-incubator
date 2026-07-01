@@ -1,0 +1,16 @@
+{"games": [
+  {"uuid":"g1","url":"https://chess.com/game/g1","end_time":1717200000,
+   "time_class":"bullet","time_control":"60","rated":true,"rules":"chess",
+   "eco":"https://chess.com/openings/Italian-Game",
+   "accuracies":{"white":83.1,"black":74.2},
+   "white":{"username":"eric","rating":1450,"result":"win"},
+   "black":{"username":"opp1","rating":1440,"result":"resigned"},
+   "pgn":"[Event \"x\"]\n[ECO \"C50\"]\n[Opening \"Italian Game\"]\n[TimeControl \"60\"]\n\n1. e4 {[%clk 0:01:00]} e5 {[%clk 0:00:59]} 2. Nf3 {[%clk 0:00:58]} 1-0\n"},
+  {"uuid":"g2","url":"https://chess.com/game/g2","end_time":1717300000,
+   "time_class":"bullet","time_control":"60","rated":true,"rules":"chess",
+   "eco":"https://chess.com/openings/Sicilian-Defense",
+   "accuracies":{"white":91.0,"black":55.5},
+   "white":{"username":"opp2","rating":1500,"result":"win"},
+   "black":{"username":"eric","rating":1460,"result":"checkmated"},
+   "pgn":"[Event \"y\"]\n[ECO \"B20\"]\n[Opening \"Sicilian Defense\"]\n[TimeControl \"60\"]\n\n1. e4 {[%clk 0:01:00]} c5 {[%clk 0:00:59]} 1-0\n"}
+]}
