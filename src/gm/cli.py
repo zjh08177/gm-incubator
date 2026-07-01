@@ -24,12 +24,23 @@ def version():
 def sync(username: str, time_class: str = "bullet", max_games: int = typer.Option(None),
          full: bool = False, depth: int = 12, db: str = typer.Option(None)):
     """Fetch + analyze games from Chess.com into the local KB."""
+    import httpx
     from gm import sync as sync_mod
     from gm.analysis.engine import Analyzer
     c = _conn(db)
-    with Analyzer(depth=depth) as a:
-        res = sync_mod.sync(c, username, time_class, a,
-                            max_games=max_games, full=full)
+    try:
+        with Analyzer(depth=depth) as a:
+            res = sync_mod.sync(c, username, time_class, a,
+                                max_games=max_games, full=full)
+    except RuntimeError as e:                       # stockfish missing
+        typer.secho(str(e), fg="red")
+        raise typer.Exit(1)
+    except httpx.HTTPStatusError as e:
+        code = e.response.status_code
+        msg = (f"Chess.com user '{username}' not found."
+               if code == 404 else f"Chess.com API error {code}.")
+        typer.secho(msg, fg="red")
+        raise typer.Exit(1)
     typer.echo(_json.dumps(res, indent=2))
 
 

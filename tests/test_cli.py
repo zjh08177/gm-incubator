@@ -41,3 +41,12 @@ def test_repertoire_md(tmp_path):
     p = _seed_file(tmp_path)
     res = runner.invoke(app, ["repertoire", "--db", str(p), "--md"])
     assert res.exit_code == 0 and "Italian Game" in res.stdout
+
+
+def test_sync_missing_stockfish_is_clean_error(tmp_path, monkeypatch):
+    from gm import config
+    monkeypatch.setattr(config, "stockfish_path", lambda: None)
+    monkeypatch.delenv("STOCKFISH_PATH", raising=False)
+    res = runner.invoke(app, ["sync", "someuser", "--db", str(tmp_path / "s.sqlite")])
+    assert res.exit_code == 1
+    assert "tockfish" in res.output          # clean message, not a traceback
