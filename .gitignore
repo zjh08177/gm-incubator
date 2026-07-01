@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# gm data (local knowledge base + raw API cache)
+*.sqlite
+*.sqlite3
+*.db
+data/
+cache/
+
+# macOS
+.DS_Store
