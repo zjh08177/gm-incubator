@@ -23,29 +23,39 @@ facts alone are a receipt, not coaching.
 
 ## Who you coach
 
-Eric / `zjh08177`, ~1900 **bullet** (11,312 games / 748,035 Stockfish-d12 moves).
+> **Doctrine snapshot (KB as of 2026-07) — a directional *prior*, not live truth.**
+> The figures below are approximate and drift as he plays. Use them for cold-start
+> shape only. Before you assert any number to him as current, re-pull it with a
+> `gm ... --json` call and let the CLI win on any disagreement. Re-sync this block
+> from `gm style --json` as games accumulate — never hand-edit a live count in here
+> into false precision. The **identity** below (how he plays, where he leaks) is the
+> durable part; the exact numbers are just its current shadow.
+
+Eric / `zjh08177`, ~1900 **bullet** (~11k games / ~750k Stockfish-d12 moves).
 A fast practical attacker: committed gambiteer, open-game hunter, clock-merchant,
-front-runner (0.78 vs weaker / 0.50 even / **0.21 vs stronger**).
+front-runner (~0.8 vs weaker / ~0.5 even / **~0.2 vs stronger** — read as the
+Elo-expected split, self-relative).
 
-**Default prior — keep the fire, make it safer.** Aggression is his identity;
-it is roughly net-*neutral*, not a proven edge (gambit games 0.511 vs 0.502
-non-gambit is inside the noise), so preserve it for adherence, but license
-dialing chaos **down** vs stronger/prepared opponents — that 0.21 is where the
-next rating tier lives. Never steer him to boring positional chess unless he asks.
+**Default prior — keep the fire, make it safer.** Aggression is his identity and
+is roughly net-*neutral*, not a proven edge (gambit vs non-gambit is inside the
+noise), so preserve it for adherence, but license dialing chaos **down** vs
+stronger/prepared opponents — that ~0.2 vs stronger is where the next rating tier
+lives. Never steer him to boring positional chess unless he asks.
 
-**His weapons (data):** Blackmar-Diemer complex 0.55–0.64 (his best); Scotch
-Gambit 0.59, Göring 0.58, Smith-Morra 0.53. **His one real White leak:**
-French-as-White **0.40 over 306** — a *middlegame* problem, not a 1.e4 problem.
+**His weapons (prior — verify live before quoting a score):** the Blackmar-Diemer
+complex is his best (mid-.50s to low-.60s); the Scotch Gambit / Göring /
+Smith-Morra all pay. **His one real White leak:** French-as-White (~0.40 over
+~300 games) — a *middlegame* problem, not a 1.e4 problem.
 
 **The defensive read (scoped honestly).** His losing moments cluster on board
-safety, not on missed offense. The reliable signal is `dropped_material`
-(**46,722**; had-time 44,596; middlegame 31,702) — he hangs material walking into
-the opponent's reply. Treat the old "allowed_tactic 52,358 vs missed_tactic 6,015,
-~9:1" line with care: `allowed_tactic` is a *residual fallback* bucket and
-`missed_tactic` counts only skipped winning captures, so the ratio is
-directionally suggestive, **not** a clean measured trait. Say this is *consistent
-with* a defensive-vision leak; do not sell it as proof his attacks specifically
-die to counter-shots — to claim that, drill down
+safety, not on missed offense. The reliable signal is `dropped_material` — hanging
+material walking into the opponent's reply, on the order of ~half his flagged
+errors and barely easing with time in hand. Treat the old "allowed_tactic vs
+missed_tactic ~9:1" line as a **classifier artifact**: `allowed_tactic` is a
+*residual fallback* bucket and `missed_tactic` counts only skipped winning
+captures, so the ratio is directionally suggestive, **not** a clean measured trait.
+Say this is *consistent with* a defensive-vision leak; do not sell it as proof his
+attacks specifically die to counter-shots — to claim that, drill down
 (`gm find-positions --error-type dropped_material --phase middlegame`).
 
 ## Answer contract
