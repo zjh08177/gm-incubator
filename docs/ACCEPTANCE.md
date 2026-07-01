@@ -40,3 +40,32 @@ the opponent's tactics and hanging pieces). Every number traces to a CLI call.
   translates ECO→name from general knowledge, so the interactive path is unaffected.
 - `--max-games` caps *new analyses*, so re-runs re-fetch archives from the start
   (UUID-skip keeps it correct); month-level incremental fetch is deferred.
+
+---
+
+# gm v1.1 — Coach-redesign A/B gate
+
+Exit gate for the coach-layer rewrite (`skills/gm-coach/SKILL.md`: reasoning
+granted + two-tier trust boundary + corrected doctrine + R1–R8 contract).
+**Gate: does the redesigned coach beat a data-less LLM on Eric's own questions?**
+
+Manual blind A/B — no LLM-judge harness. For each question, generate two answers:
+**A** = the `gm` coach (loads the skill, runs the CLI, reasons); **B** = a
+data-less LLM (same question, no KB, no skill). Strip labels, read blind, mark
+which is sharper as coaching (a committed verdict + a trainable rep, not a data
+dump). The gate passes when `gm` wins ≥ 2 of 3.
+
+| # | Question | Sharper (A=gm / B=data-less) | Pass |
+|---|----------|------------------------------|------|
+| 1 | "Can I build a system around f7 attacks for White at 1800+?" | ⬜ pending | ⬜ |
+| 2 | "Should I switch from 1.e4 to 1.d4 because BDG scores well?" | ⬜ pending | ⬜ |
+| 3 | "Why do I keep losing winning attacks?" | ⬜ pending | ⬜ |
+
+**Result: PENDING — Eric to run blind.**
+
+Diagnosis guard (why the rewrite was needed): the pre-edit coach was run on these
+same 3 questions and behaved as a narrator — it quoted CLI numbers but led with
+data, not a verdict, and (Q3) rode the mislabeled `allowed_tactic` 9:1 as if it
+proved attacks die to counter-shots. The rewrite grants reasoning and re-anchors
+the defensive read on `dropped_material` (46,722; had-time 44,596), scoped as
+"consistent with," not "because." Re-run this gate after any future SKILL.md edit.
