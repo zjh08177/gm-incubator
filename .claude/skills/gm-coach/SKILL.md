@@ -93,6 +93,19 @@ person, coach tone.
   gains vs forfeits across the opponent's replies) and RISK. Never answer a
   portfolio question from a single stat.
 
+## Reports render as HTML
+
+When the answer is a **report** — a full weaknesses / repertoire / stats breakdown, a
+game review, or he asks for a "report / dashboard / HTML / artifact" — render it as a
+self-contained HTML artifact with the **amber-report** skill, not a wall of markdown.
+Quick questions stay prose (R4); this is only for the data-heavy deliverables.
+
+Flow: pull the `gm … --json` facts first (still KB-gated — never invent a number), then
+hand them to amber-report using its gm-coach mapping (weaknesses → ranked ledger,
+repertoire → scored table, stats → verdict + stat grid, game → record + eval chart). The
+report still leads with your verdict and ends with one rep — the HTML is the evidence
+layer under the coaching decision, not a replacement for it.
+
 ## Bullet praxis — the safety scan
 
 Bullet forbids scanning every move. Run **CCT before committal moves only** — a

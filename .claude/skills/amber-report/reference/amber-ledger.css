@@ -1,0 +1,189 @@
+/* ============================================================================
+   AMBER LEDGER — a self-contained design system for rich HTML reports.
+   Ink-on-paper amber-monochrome dossier. CSP-safe: system fonts only, no CDN.
+
+   USAGE: inline this ENTIRE file inside a <style> block in the report HTML
+   (you cannot <link> it — the artifact CSP blocks external hosts, and a skill
+   file isn't served). Then compose the components below.
+
+   ENCODING RULE (keep the discipline): AMBER means "cost / attention / look here",
+   OLIVE means "fine / neutral". Spend saturated color in ONE place. A good stat
+   is quiet; a leak is amber. Do NOT add a green/red palette — invert instead.
+   ============================================================================ */
+
+:root{
+  --paper:#EAEDE3;    /* green-biased off-white — page ground */
+  --fold:#E2E5DA;     /* one step down — fills, tracks, zebra */
+  --carbon:#15180F;   /* green-black ink — body + display */
+  --olive:#5B614E;    /* rules, labels, "fine/neutral" state */
+  --olive-ink:#474C3B;/* dimmed but AA-readable text */
+  --amber:#A65A00;    /* THE accent — cost / attention */
+  --amber-ink:#8A4A00;/* darker amber for small text (AA) */
+  --oxide:#7C2D18;    /* muted negative — losses, "NO", partial */
+  --tick:rgba(91,97,78,.28);
+  --mono:"SFMono-Regular","SF Mono","Menlo","Cascadia Code","Consolas","Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--carbon);
+  font-family:var(--sans);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased;
+  background-image:repeating-linear-gradient(180deg,transparent 0 27px,rgba(21,24,15,.014) 27px 28px);
+}
+.report{max-width:900px;margin:0 auto;padding:clamp(22px,4vw,56px) clamp(18px,4vw,40px) 80px}
+
+/* ---- shared utility ---- */
+.k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.09em;font-size:.72rem;color:var(--olive);font-weight:600}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:var(--amber-ink);text-decoration:none;border-bottom:1px solid rgba(138,74,0,.35)}
+a:hover{border-bottom-color:var(--amber-ink)}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* ---- frontmatter header: `$ command …` + EXIT chip (optional, CLI-native feel) ---- */
+.frontmatter{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:1px solid var(--olive);padding-bottom:14px}
+.frontmatter .prompt{font-family:var(--mono);font-size:clamp(.82rem,2.4vw,1rem);color:var(--carbon);word-break:break-word}
+.frontmatter .prompt .sig{color:var(--amber-ink)}
+.frontmatter .prompt .dim{color:var(--olive)}
+.frontmatter .chip{flex:none;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;color:var(--amber-ink);border:1px solid var(--amber);border-radius:2px;padding:3px 8px;white-space:nowrap}
+.scan{font-family:var(--mono);font-size:.82rem;line-height:1.85;color:var(--olive-ink);margin:16px 0 0;white-space:pre-wrap}
+.scan b{color:var(--carbon);font-weight:700}
+.scan .amb{color:var(--amber-ink);font-weight:700}
+
+/* ---- verdict hero ---- */
+.verdict{margin:clamp(30px,6vw,52px) 0 6px}
+.verdict h1{font-family:var(--mono);font-weight:700;font-size:clamp(1.7rem,6.4vw,3.2rem);line-height:1.04;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.verdict h1 .n{color:var(--amber)}
+.cursor{display:inline-block;width:.55ch;height:1.02em;background:var(--amber);vertical-align:-.13em;margin-left:.12em;animation:blink 1.1s step-end infinite}
+.lede{font-size:clamp(1.02rem,2.5vw,1.22rem);line-height:1.5;max-width:60ch;margin:20px 0 0}
+.lede b{color:var(--amber-ink)}
+
+/* ---- section eyebrow ---- */
+.sec{margin-top:clamp(46px,8vw,72px)}
+.eyebrow{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--olive);padding-bottom:8px;margin-bottom:6px}
+.eyebrow .rank{font-family:var(--mono);color:var(--amber-ink);font-size:.72rem;letter-spacing:.08em}
+.eyebrow h2{font-family:var(--mono);font-size:1.05rem;letter-spacing:-.01em;text-transform:uppercase;margin:0;font-weight:700}
+.eyebrow .note{margin-left:auto;font-family:var(--mono);font-size:.68rem;color:var(--olive);letter-spacing:.05em}
+
+/* ---- RANKED LEDGER: rank N items by a metric; bar + optional threshold ----
+   Use for: weaknesses by cost, anything with a leaderboard/priority ordering.
+   Rows tagged .sig (amber, expanded, inline note) vs .noise (olive, dimmed,
+   collapsible note). Same 12px left inset on .axis and every .lrow keeps the
+   threshold line and columns aligned pixel-exact. Set --cols once to retune. */
+.scroll{overflow-x:auto;margin:0 -2px}
+.ledger{min-width:560px;--cols:2.6ch minmax(150px,1fr) 172px 3.4ch 3ch 6.4ch}
+.axis{display:grid;grid-template-columns:var(--cols);gap:0 14px;align-items:end;padding:12px 0 6px 12px;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;color:var(--olive)}
+.axis .track-lbl{position:relative;height:1.4em}
+.axis .track-lbl .lo{position:absolute;left:0}
+.axis .track-lbl .hi{position:absolute;left:var(--thr,30%);padding-left:6px;color:var(--amber-ink)}
+.axis .track-lbl .thr{position:absolute;left:var(--thr,30%);top:1.5em;height:6px;border-left:1px dashed var(--amber)}
+.axis .r{text-align:right}
+.lrow{border-top:1px solid rgba(91,97,78,.22);border-left:2px solid transparent;padding:9px 0 9px 10px}
+.lrow:nth-child(even){background:var(--fold)}
+.lmain{display:grid;grid-template-columns:var(--cols);gap:0 14px;align-items:center}
+.lrank{font-family:var(--mono);font-size:.8rem;color:var(--olive);text-align:right}
+.lname{min-width:0}
+.lname .nm{font-family:var(--mono);font-weight:700;font-size:.95rem;letter-spacing:-.01em;overflow-wrap:anywhere}
+.lname .fmt{font-family:var(--sans);font-size:.76rem;color:var(--olive-ink);margin-top:1px}
+.track{position:relative;height:13px;border-radius:1px;background-color:var(--fold);background-image:repeating-linear-gradient(90deg,var(--tick) 0 1px,transparent 1px 10%)}
+.track.thr::after{content:"";position:absolute;left:var(--thr,30%);top:-4px;bottom:-4px;border-left:1px dashed rgba(166,90,0,.5)}
+.lfill{position:absolute;left:0;top:0;bottom:0;border-radius:1px;transform-origin:left center}
+.lscore{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.82rem;text-align:right}
+.lself{font-family:var(--mono);font-size:.9rem;text-align:center}
+.lstars{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.78rem;text-align:right;color:var(--olive-ink)}
+.lrow.sig{border-left-color:var(--amber)}
+.lrow.sig .lrank{color:var(--amber-ink)}
+.lrow.sig .lname .nm{color:var(--carbon)}
+.lrow.sig .lfill{background:var(--amber)}
+.lrow.sig .lscore{color:var(--amber-ink);font-weight:700}
+.lrow.noise .lrank,.lrow.noise .lname .nm,.lrow.noise .lscore{color:var(--olive-ink)}
+.lrow.noise .lfill{background:var(--olive)}
+.lrow.noise .lname .fmt{color:var(--olive)}
+.lnote{font-family:var(--sans);font-size:.86rem;line-height:1.5;margin:7px 0 1px;padding-left:calc(2.6ch + 14px);max-width:70ch}
+.lnote-wrap{padding-left:calc(2.6ch + 14px);margin-top:5px}
+details.off summary{font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;color:var(--olive);cursor:pointer;list-style:none}
+details.off summary::-webkit-details-marker{display:none}
+details.off summary::before{content:"+ note"}
+details.off[open] summary::before{content:"– note"}
+details.off .body{font-family:var(--sans);color:var(--olive-ink);line-height:1.5;margin-top:5px;max-width:70ch}
+.self-yes{color:var(--amber-ink)}.self-part{color:var(--oxide)}.self-no{color:var(--olive)}.self-na{color:var(--olive);opacity:.6}
+
+/* ---- STAT GRID: KPI cards for an overview (rating, win%, blunder rate…) ----
+   Encode a headline number + a label + an optional delta/spark. Amber only on
+   the stat that needs attention; the rest stay carbon/olive. */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
+.stat{background:var(--fold);border:1px solid rgba(91,97,78,.25);border-radius:2px;padding:14px 15px}
+.stat.flag{border-color:var(--amber)}
+.stat .lab{font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;font-size:.64rem;color:var(--olive)}
+.stat .num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:1.9rem;line-height:1.1;margin-top:6px;letter-spacing:-.02em}
+.stat.flag .num{color:var(--amber-ink)}
+.stat .sub{font-family:var(--sans);font-size:.78rem;color:var(--olive-ink);margin-top:4px}
+.stat .sub .up{color:var(--olive)}.stat .sub .down{color:var(--oxide)}
+
+/* ---- DATA TABLE: rows with inline magnitude/stacked bars (repertoire etc.) ---- */
+.dtable{width:100%;border-collapse:collapse;font-size:.9rem;min-width:520px}
+.dtable th{font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;font-size:.62rem;color:var(--olive);text-align:left;font-weight:600;padding:8px 10px;border-bottom:1px solid var(--olive)}
+.dtable td{padding:9px 10px;border-bottom:1px solid rgba(91,97,78,.18);vertical-align:middle}
+.dtable td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.dtable tr.flag td:first-child{border-left:2px solid var(--amber);padding-left:8px}
+.dtable .nm{font-family:var(--mono);font-weight:700;font-size:.88rem}
+/* inline bar cell */
+.bar{position:relative;height:11px;min-width:70px;border-radius:1px;background:var(--fold);background-image:repeating-linear-gradient(90deg,var(--tick) 0 1px,transparent 1px 20%)}
+.bar > i{position:absolute;left:0;top:0;bottom:0;background:var(--olive);border-radius:1px}
+.bar.flag > i{background:var(--amber)}
+/* stacked W-D-L proportion bar */
+.wdl{display:flex;height:11px;min-width:90px;border-radius:1px;overflow:hidden}
+.wdl > .w{background:var(--olive)}.wdl > .d{background:rgba(91,97,78,.4)}.wdl > .l{background:var(--oxide)}
+.wdl-key{font-family:var(--mono);font-size:.72rem;color:var(--olive-ink);margin-left:8px}
+
+/* ---- DEEP-DIVE RECORD: an expanded write-up of one item ---- */
+.rec{border-top:1px solid var(--olive);padding-top:18px;margin-top:26px}
+.rec:first-of-type{border-top:none;margin-top:8px}
+.rec-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.rec-h .rk{font-family:var(--mono);color:var(--amber);font-size:1.5rem;font-weight:700;line-height:1}
+.rec-h .nm{font-family:var(--mono);font-weight:700;font-size:1.18rem;letter-spacing:-.01em}
+.rec-h .st{font-family:var(--mono);font-size:.78rem;color:var(--olive)}
+.rec-h .tag{margin-left:auto;font-family:var(--mono);font-size:.78rem;color:var(--amber-ink);border:1px solid var(--amber);border-radius:2px;padding:2px 8px;white-space:nowrap}
+.rec p{margin:12px 0 0;max-width:68ch}
+.rec .meta{font-family:var(--mono);font-size:.76rem;color:var(--olive-ink);margin-top:12px;line-height:1.7}
+.rec .meta b{color:var(--carbon);font-weight:700}
+.rec .cav{color:var(--oxide)}
+.cmd{font-family:var(--mono);font-size:.8rem;background:var(--fold);border:1px solid rgba(91,97,78,.3);border-radius:2px;padding:9px 11px;margin-top:12px;overflow-x:auto;white-space:pre;color:var(--carbon)}
+.cmd .sig{color:var(--amber-ink)}
+
+/* ---- CALLOUT: the recommendation / "what to do" box ---- */
+.callout{margin-top:16px;border:1px solid var(--amber);border-radius:3px;padding:clamp(18px,4vw,26px);background:linear-gradient(0deg,rgba(166,90,0,.045),rgba(166,90,0,.045))}
+.callout h3{font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;font-size:.95rem;margin:0 0 6px;color:var(--amber-ink)}
+.callout .row{display:flex;gap:12px;margin-top:16px}
+.callout .row .arw{font-family:var(--mono);color:var(--amber-ink);font-weight:700;flex:none}
+.callout .row .txt{max-width:66ch;min-width:0}
+.callout .row .txt b{color:var(--carbon)}
+.callout .row .txt .sub{font-size:.9rem;color:var(--olive-ink);margin-top:2px;overflow-wrap:anywhere}
+
+/* ---- FIGURE (canvas chart wrapper) ---- */
+.fig{margin-top:14px;background:var(--fold);border:1px solid rgba(91,97,78,.25);border-radius:2px;padding:16px 14px 12px}
+.fig canvas{display:block;width:100%;height:300px}
+.figcap{font-family:var(--sans);font-size:.86rem;color:var(--olive-ink);line-height:1.5;margin:12px 2px 0;max-width:72ch}
+.figcap b{color:var(--carbon)}
+.legend{display:flex;gap:18px;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--olive);margin:8px 2px 0}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:.02em}
+
+/* ---- FOOTER ---- */
+.foot{margin-top:56px;border-top:1px solid var(--olive);padding-top:16px;font-family:var(--mono);font-size:.72rem;line-height:1.85;color:var(--olive);white-space:pre-wrap}
+.foot .p{color:var(--amber-ink)}
+
+/* ---- motion (bars type in; cursor blinks) — all opt-in and reduced safe ---- */
+@keyframes blink{50%{opacity:0}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ledger.lit .lfill{transform:scaleX(0)}
+@media (prefers-reduced-motion:no-preference){
+  .ledger.lit .lfill{animation:grow .5s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0)*32ms)}
+}
+@media (prefers-reduced-motion:reduce){
+  .cursor{animation:none}
+  .ledger.lit .lfill{transform:none}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .lnote,.lnote-wrap{padding-left:0}
+}
