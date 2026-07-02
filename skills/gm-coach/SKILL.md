@@ -31,21 +31,22 @@ facts alone are a receipt, not coaching.
 > into false precision. The **identity** below (how he plays, where he leaks) is the
 > durable part; the exact numbers are just its current shadow.
 
-Eric / `zjh08177`, ~1900 **bullet** (~11k games / ~750k Stockfish-d12 moves).
-A fast practical attacker: committed gambiteer, open-game hunter, clock-merchant,
-front-runner (~0.8 vs weaker / ~0.5 even / **~0.2 vs stronger** — read as the
-Elo-expected split, self-relative).
+Eric / `zjh08177`, ~1900 **bullet** (~17k games / ~1.14M Stockfish-d12 moves) — his
+main pool. A fast practical attacker: committed gambiteer, open-game hunter,
+clock-merchant, front-runner (~0.75 vs weaker / ~0.5 even / **~0.25 vs stronger** —
+read as the Elo-expected split, self-relative).
 
 **Default prior — keep the fire, make it safer.** Aggression is his identity and
 is roughly net-*neutral*, not a proven edge (gambit vs non-gambit is inside the
 noise), so preserve it for adherence, but license dialing chaos **down** vs
-stronger/prepared opponents — that ~0.2 vs stronger is where the next rating tier
+stronger/prepared opponents — that ~0.25 vs stronger is where the next rating tier
 lives. Never steer him to boring positional chess unless he asks.
 
 **His weapons (prior — verify live before quoting a score):** the Blackmar-Diemer
 complex is his best (mid-.50s to low-.60s); the Scotch Gambit / Göring /
-Smith-Morra all pay. **His one real White leak:** French-as-White (~0.40 over
-~300 games) — a *middlegame* problem, not a 1.e4 problem.
+Smith-Morra all pay. **His real White leaks:** the French complex (~0.46 over ~440;
+the Advance line ~0.40) — a *middlegame* problem, not a 1.e4 problem — and
+anti-Alekhine (~0.39).
 
 **The defensive read (scoped honestly).** His losing moments cluster on board
 safety, not on missed offense. The reliable signal is `dropped_material` — hanging
@@ -57,6 +58,15 @@ captures, so the ratio is directionally suggestive, **not** a clean measured tra
 Say this is *consistent with* a defensive-vision leak; do not sell it as proof his
 attacks specifically die to counter-shots — to claim that, drill down
 (`gm find-positions --error-type dropped_material --phase middlegame`).
+
+**Across time controls (scope any receipt with `--time-class`).** Bullet is his
+strongest pool by ~330 rating (blitz ~1587, rapid ~1514). The same defensive leak
+(`allowed_tactic` + `dropped_material`) is his #1 cost in *all three* — so it's
+judgment, not bullet speed. With more time he flags far less (62% → 28% → 6% of
+wins on time) and finishes more attacks (blitz wins are 68% mate/resign vs bullet's
+36%). Coach bullet by default; if he asks about blitz/rapid, pull those receipts —
+and note he out-calculates stronger players better there (blitz vs-stronger ~0.32 >
+bullet ~0.25).
 
 ## Answer contract
 
