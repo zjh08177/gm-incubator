@@ -55,13 +55,17 @@ data-less LLM (same question, no KB, no skill). Strip labels, read blind, mark
 which is sharper as coaching (a committed verdict + a trainable rep, not a data
 dump). The gate passes when `gm` wins ≥ 2 of 3.
 
-| # | Question | Sharper (A=gm / B=data-less) | Pass |
-|---|----------|------------------------------|------|
-| 1 | "Can I build a system around f7 attacks for White at 1800+?" | ⬜ pending | ⬜ |
-| 2 | "Should I switch from 1.e4 to 1.d4 because BDG scores well?" | ⬜ pending | ⬜ |
-| 3 | "Why do I keep losing winning attacks?" | ⬜ pending | ⬜ |
+Positions were mixed in the blinded run (`ab-gate-2026-07.md`): gm = B, A, B.
 
-**Result: PENDING — blinded pairs ready in [`ab-gate-2026-07.md`](ab-gate-2026-07.md); Eric to read + pick, then record the ≥2/3 verdict here.**
+| # | Question | Eric's blind pick | Was it gm? |
+|---|----------|-------------------|------------|
+| 1 | "Can I build a system around f7 attacks for White at 1800+?" | B | ✅ gm (Eric: "B better, but I know B is reading game data") |
+| 2 | "Should I switch from 1.e4 to 1.d4 because BDG scores well?" | A | ✅ gm |
+| 3 | "Why do I keep losing winning attacks?" | B | ✅ gm |
+
+**Result: gm 3/3 → PASS (2026-07-02).** The redesigned coach was preferred on all three.
+
+**Validity caveats (honest):** (1) both answers were authored in one session, not independent — a clean re-run pastes the data-less answer from a fresh ChatGPT. (2) The gm answer is *identifiable* by its use of Eric's real numbers (he flagged this on Q1), so the run isn't blind on the data-tell axis. It survives the caveat because on Q1 and Q3 the data **changes the verdict** (Q1: "you already run this — consolidate, don't build"; Q3: costliest-error + a measurable checkpoint), not just decorates it — i.e. the data-grounded answer is better *coaching*, not merely more specific. On Q2 Eric preferred the gm answer without flagging a tell. A harder future gate: pair a real-numbers answer against a *plausibly-wrong-numbers* answer to isolate coaching quality from data-presence.
 
 Diagnosis guard (why the rewrite was needed): the pre-edit coach was run on these
 same 3 questions and behaved as a narrator — it quoted CLI numbers but led with
