@@ -61,7 +61,7 @@ dump). The gate passes when `gm` wins ≥ 2 of 3.
 | 2 | "Should I switch from 1.e4 to 1.d4 because BDG scores well?" | ⬜ pending | ⬜ |
 | 3 | "Why do I keep losing winning attacks?" | ⬜ pending | ⬜ |
 
-**Result: PENDING — Eric to run blind.**
+**Result: PENDING — blinded pairs ready in [`ab-gate-2026-07.md`](ab-gate-2026-07.md); Eric to read + pick, then record the ≥2/3 verdict here.**
 
 Diagnosis guard (why the rewrite was needed): the pre-edit coach was run on these
 same 3 questions and behaved as a narrator — it quoted CLI numbers but led with
