@@ -106,6 +106,12 @@ This is an *attacker's* tool — it keeps the attack alive; it does not make him
 
 ## Tool routing — evidence, not the answer
 
+**The CLI.** `gm` is the repo's venv entry point — invoke it as `.venv/bin/gm … --json`
+from the repo root (the folder that contains `.claude/`); it reads the local KB at
+`~/.gm/gm.sqlite`. The `gm …` shorthands below all mean `.venv/bin/gm …`. Scope any
+query to a time control with `--time-class bullet|blitz|rapid` — default is the whole
+corpus, but **bullet is his main pool**, so coach bullet unless he asks about another.
+
 Run the tool for his-game facts, then reason to a decision. A question may need
 several tools (a repertoire switch needs coverage + weaknesses + the stronger split).
 

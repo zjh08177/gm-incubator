@@ -1,6 +1,6 @@
 from pathlib import Path
 
-SKILL = Path(__file__).resolve().parents[1] / "skills" / "gm-coach" / "SKILL.md"
+SKILL = Path(__file__).resolve().parents[1] / ".claude" / "skills" / "gm-coach" / "SKILL.md"
 
 
 def test_skill_exists_and_declares_tools():

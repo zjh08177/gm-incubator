@@ -45,7 +45,7 @@ the opponent's tactics and hanging pieces). Every number traces to a CLI call.
 
 # gm v1.1 — Coach-redesign A/B gate
 
-Exit gate for the coach-layer rewrite (`skills/gm-coach/SKILL.md`: reasoning
+Exit gate for the coach-layer rewrite (`.claude/skills/gm-coach/SKILL.md`: reasoning
 granted + two-tier trust boundary + corrected doctrine + R1–R8 contract).
 **Gate: does the redesigned coach beat a data-less LLM on Eric's own questions?**
 
